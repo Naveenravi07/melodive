@@ -8,23 +8,17 @@
     "dev": "tsup --watch --onSuccess \"node dist/index.cjs\"",
     "build": "tsup",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src/ --max-warnings 0",
-    "test": "jest --detectOpenHandles"
-  },
-  "jest": {
-    "preset": "@repo/jest-presets/node"
+    "lint": "eslint src/ --max-warnings 0"
   },
   "dependencies": {
     "@repo/logger": "workspace:*",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
-    "express": "4.21.2",
-    "morgan": "^1.10.0"
+    "express": "4.21.2"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@repo/eslint-config": "workspace:*",
-    "@repo/jest-presets": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/body-parser": "^1.19.5",
     "@types/cors": "^2.8.17",
