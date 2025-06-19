@@ -4,7 +4,6 @@
 set -e
 
 PROTO_DIR=$(dirname "$0")/..
-echo "$PROTO_DIR"
 OUT_DIR=$PROTO_DIR/gen/py
 PYTHON=$PROTO_DIR/.venv/bin/python
 PY_ACT=$PROTO_DIR/.venv/bin/activate

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "codegen:ts": "mkdir -p gen/ts && npx protoc --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=gen/ts --ts_proto_opt=esModuleInterop=true,forceLong=string,useOptionals=true -I . *.proto",
+    "codegen:ts": "mkdir -p gen/ts && npx protoc --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=gen/ts --ts_proto_opt=esModuleInterop=true,forceLong=string,useOptionals=messages -I . *.proto",
     "codegen:py": "bash ./scripts/codegen_py.sh",
     "codegen": "npm run codegen:ts && npm run codegen:py"
   },
