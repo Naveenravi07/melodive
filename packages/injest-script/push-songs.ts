@@ -28,11 +28,10 @@ import {IndexingJob} from '@repo/proto/songs'
             let ext = '.'.concat(name_split[name_split.length - 1])
 
             if(!audioExt.includes(ext)) continue;
-            console.log(music.name)
 
             let msg = IndexingJob.encode({fileName: music.name, filePath: music.parentPath}).finish()
             ch1.sendToQueue(queue,Buffer.from(msg))
-            console.log(`Message Sent ${msg}`)
+            console.log(`Message Sent ${music.name}`)
         }
 
     } catch (err) {
