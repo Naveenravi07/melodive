@@ -2,17 +2,17 @@
   "name": "@repo/injest-script",
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-  },
+  "scripts": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "amqplib": "^0.10.8",
-    "@repo/proto": "workspace:*"
+    "@repo/proto": "workspace:*",
+    "amqplib": "^0.10.8"
   },
   "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
     "@types/amqplib": "^0.10.7",
-    "@repo/typescript-config": "workspace:*"
+    "tsx": "^4.20.3"
   }
 }

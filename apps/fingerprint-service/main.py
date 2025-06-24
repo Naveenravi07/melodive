@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import sys
 import numpy as np
+import psycopg2
 import librosa
 from scipy.signal.windows import hamming
 from numpy.fft import rfft  
@@ -16,10 +17,14 @@ warnings.filterwarnings('ignore')
 # Constants
 QUEUE_NAME = "songs"
 MAX_WORKERS = 4
+song_id = 1
 
+conn = psycopg2.connect("dbname=melodive user=postgres")
+cur = conn.cursor()
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 def process_message(body):
+    global song_id
     job: IndexingJob = IndexingJob()
     job.ParseFromString(body)
 
@@ -89,7 +94,24 @@ def process_message(body):
 
     print("Total hashes generated:", len(hashes))
     print("Hash Generated : ",hashes)
+    
+    try :
+        fingerprints = [
+            (song_id, int(hash_val), int(anchor_time))
+            for (hash_val, anchor_time) in hashes
+        ]
+
+        conn.autocommit = False
+        cur.executemany(
+            "INSERT INTO fingerprints(song_id, hash_value, anchor_time) VALUES (%s, %s, %s)",
+            fingerprints
+        )
+        conn.commit()
+    except Exception as e:
+        print("Error occurred:", e)
+    
     print("Done processing for", job.fileName)
+    song_id = song_id + 1
 
 
 def frame_signal(signal: np.ndarray, frame_size: int, hop_size: int) -> np.ndarray:
