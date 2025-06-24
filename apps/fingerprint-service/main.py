@@ -44,8 +44,52 @@ def process_message(body):
     fft_frames = np.abs(rfft(windowed_frames, axis=1))
     print("FFT shape =", fft_frames.shape)
     print("FFT example magnitudes for first frame:", fft_frames[0][:10]) 
-    print("Done processing for", job.fileName)
 
+    # Peak picking
+    NUM_BANDS = 6
+    BIN_COUNT = fft_frames.shape[1]
+    BINS_PER_BAND = BIN_COUNT // NUM_BANDS
+
+    peaks = []
+
+    for frame_idx, spectrum in enumerate(fft_frames):
+        for band_idx in range(NUM_BANDS):
+            start_bin = band_idx * BINS_PER_BAND
+            end_bin = (band_idx + 1) * BINS_PER_BAND if band_idx < NUM_BANDS - 1 else BIN_COUNT
+
+            band = spectrum[start_bin:end_bin]
+            local_peak_idx = np.argmax(band)
+            peak_bin = start_bin + local_peak_idx
+            magnitude = band[local_peak_idx]
+
+            peaks.append((frame_idx, peak_bin, magnitude))
+
+    print("Total peaks extracted:", len(peaks))
+    print("Sample peaks:", peaks[:10])
+
+    TARGET_ZONE_FRAMES = 20
+    hashes = []
+    peaks.sort(key=lambda p: p[0]) 
+
+    for i, (anchor_time, f1, _) in enumerate(peaks):
+        for j in range(i+1, len(peaks)):
+            target_time, f2, _ = peaks[j]
+
+            # Stop if the target peak is outside the target zone
+            dt = target_time - anchor_time
+            if dt > TARGET_ZONE_FRAMES:
+                break
+            elif dt <= 0:
+                continue  # skip invalid
+
+            # Encode the fingerprint into a 32-bit integer
+            if f1 < 512 and f2 < 512 and dt < (1 << 14):  
+                hash_val = (f1 << 23) | (f2 << 14) | dt
+                hashes.append((hash_val, anchor_time)) 
+
+    print("Total hashes generated:", len(hashes))
+    print("Hash Generated : ",hashes)
+    print("Done processing for", job.fileName)
 
 
 def frame_signal(signal: np.ndarray, frame_size: int, hop_size: int) -> np.ndarray:
