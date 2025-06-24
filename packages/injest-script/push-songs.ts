@@ -16,7 +16,7 @@ import {IndexingJob} from '@repo/proto/songs'
     await ch1.assertQueue(queue);
 
     try {
-        const audioExt = [".mp3", ".m4a"]
+        const audioExt = [".wav",]
 
         let dir = await fs.readdir(songs_dir, {
             withFileTypes: true,
@@ -29,7 +29,7 @@ import {IndexingJob} from '@repo/proto/songs'
 
             if(!audioExt.includes(ext)) continue;
 
-            let msg = IndexingJob.encode({fileName: music.name, filePath: music.parentPath}).finish()
+            let msg = IndexingJob.encode({fileName: music.name, filePath: `${music.parentPath}/${music.name}`}).finish()
             ch1.sendToQueue(queue,Buffer.from(msg))
             console.log(`Message Sent ${music.name}`)
         }
