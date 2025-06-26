@@ -1,6 +1,0 @@
-syntax = "proto3";
-
-message IndexingJob {
-  string filePath = 1;
-  string fileName = 2;
-}
