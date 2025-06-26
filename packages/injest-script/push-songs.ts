@@ -16,7 +16,7 @@ import {IndexingJob} from '@repo/proto/songs'
     await ch1.assertQueue(queue);
 
     try {
-        const audioExt = [".wav",]
+        const audioExt = [".m4a",]
 
         let dir = await fs.readdir(songs_dir, {
             withFileTypes: true,

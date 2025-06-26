@@ -1,6 +1,8 @@
 import pika
+import io
 import warnings
 from concurrent.futures import ThreadPoolExecutor
+from psycopg2 import pool
 import os
 import sys
 import numpy as np
@@ -17,14 +19,12 @@ warnings.filterwarnings('ignore')
 # Constants
 QUEUE_NAME = "songs"
 MAX_WORKERS = 4
-song_id = 1
 
-conn = psycopg2.connect("dbname=melodive user=postgres")
-cur = conn.cursor()
+db_pool = pool.ThreadedConnectionPool(1, MAX_WORKERS,user="postgres.oktupobutqyfznkpnchf", dbname="postgres", host="aws-0-ap-south-1.pooler.supabase.com", port="6543", password="kPa0OVNUZfPA2NJe")
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 def process_message(body):
-    global song_id
+    conn = None
     job: IndexingJob = IndexingJob()
     job.ParseFromString(body)
 
@@ -48,7 +48,6 @@ def process_message(body):
     # Apply FFT
     fft_frames = np.abs(rfft(windowed_frames, axis=1))
     print("FFT shape =", fft_frames.shape)
-    print("FFT example magnitudes for first frame:", fft_frames[0][:10]) 
 
     # Peak picking
     NUM_BANDS = 6
@@ -70,7 +69,6 @@ def process_message(body):
             peaks.append((frame_idx, peak_bin, magnitude))
 
     print("Total peaks extracted:", len(peaks))
-    print("Sample peaks:", peaks[:10])
 
     TARGET_ZONE_FRAMES = 20
     hashes = []
@@ -93,25 +91,32 @@ def process_message(body):
                 hashes.append((hash_val, anchor_time)) 
 
     print("Total hashes generated:", len(hashes))
-    print("Hash Generated : ",hashes)
     
-    try :
-        fingerprints = [
-            (song_id, int(hash_val), int(anchor_time))
-            for (hash_val, anchor_time) in hashes
-        ]
+    try:
+            conn = db_pool.getconn()
+            cur = conn.cursor()
 
-        conn.autocommit = False
-        cur.executemany(
-            "INSERT INTO fingerprints(song_id, hash_value, anchor_time) VALUES (%s, %s, %s)",
-            fingerprints
-        )
-        conn.commit()
+            cur.execute("INSERT INTO songs (name, filepath) VALUES (%s, %s) RETURNING id", (job.fileName, job.filePath))
+            song_id = cur.fetchone()[0]
+            fingerprints = [(song_id, int(hash_val), int(anchor_time)) for (hash_val, anchor_time) in hashes]
+            
+            output = io.StringIO()
+            for fp in fingerprints:
+                output.write(f"{fp[0]}\t{fp[1]}\t{fp[2]}\n") 
+            
+            output.seek(0) # Go to the beginning of the stream
+            cur.copy_from(output, 'fingerprints', columns=('song_id', 'hash_value', 'anchor_time'))
+            conn.commit()
+
     except Exception as e:
-        print("Error occurred:", e)
-    
-    print("Done processing for", job.fileName)
-    song_id = song_id + 1
+        if conn:
+            conn.rollback()
+        print("DB error:", e)
+    finally:
+        if conn:
+            db_pool.putconn(conn) 
+
+    print("Fingerprinting complete for:", job.fileName)
 
 
 def frame_signal(signal: np.ndarray, frame_size: int, hop_size: int) -> np.ndarray:
