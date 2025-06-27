@@ -15,15 +15,22 @@ import pyaudio
 from collections import defaultdict
 
 warnings.filterwarnings('ignore')
-
-
-
-
-
-
-
-
 MAX_WORKERS = 4
+
+'''
+CREATE TABLE fingerprints (
+    id SERIAL PRIMARY KEY,
+    song_id INTEGER NOT NULL,
+    hash_value BIGINT NOT NULL,
+    anchor_time INTEGER NOT NULL
+);
+CREATE TABLE songs (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    filepath TEXT
+);
+'''
+
 
 DB_USER = "postgres"
 DB_NAME = "melodive"
